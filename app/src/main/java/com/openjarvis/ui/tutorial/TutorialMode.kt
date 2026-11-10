@@ -56,7 +56,7 @@ class TutorialMode(private val context: Context) {
             Action.PRESS_HOME -> "Going to home screen"
             else -> "Performing ${action.action}"
         }
-        currentStepFlow.value = TutorialStep(stepNumber, action.description ?: action.action, bounds, narration)
+        currentStepFlow.value = TutorialStep(stepNumber, action.action, bounds, narration)
         showHighlight(bounds)
         voiceManager.speak(narration)
         delay(1000)

@@ -45,10 +45,10 @@ object JarvisErrorTranslator {
     fun translate(error: Throwable, providerName: String?): String {
         return when {
             error.message?.contains("401") == true ->
-                "API key rejected by \${providerName ?: "provider"}. Check your key in Settings."
+                "API key rejected by " + (providerName ?: "provider") + ". Check your key in Settings."
             
             error.message?.contains("429") == true ->
-                "Rate limited by \${providerName ?: "provider"}. Trying next provider..."
+                "Rate limited by " + (providerName ?: "provider") + ". Trying next provider..."
             
             error.message?.contains("503") == true ->
                 "\${providerName ?: "Provider"} is down. Try a different provider in Settings."

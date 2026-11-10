@@ -20,7 +20,7 @@ class PromptEngine(private val context: Context) {
     suspend fun analyzeIntent(prompt: String): Intent = withContext(Dispatchers.IO) {
         val resolvedPrompt = conversationContext.resolveReferences(prompt)
         
-        val intentJson = IntentAnalyzer.analyze(resolvedPrompt)
+        val intentJson = IntentAnalyzer.analyze(resolvedPrompt, context)
         
         parseIntentFromJson(resolvedPrompt, intentJson)
     }

@@ -51,7 +51,7 @@ object JarvisErrorTranslator {
                 "Rate limited by " + (providerName ?: "provider") + ". Trying next provider..."
             
             error.message?.contains("503") == true ->
-                "\${providerName ?: "Provider"} is down. Try a different provider in Settings."
+                (providerName ?: "Provider") + " is down. Try a different provider in Settings."
             
             error.message?.contains("timeout") == true ->
                 "Request timed out after 30s. Your internet may be slow."

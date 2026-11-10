@@ -11,13 +11,14 @@ class AIAppInteractor(private val context: Context) {
     private val workingMemory = TaskWorkingMemory()
     
     fun openAIApp(meta: AIAppMeta): Boolean {
-        return JarvisAccessibilityService.instance?.openAppByPackage(meta.packageName) ?: false
+        val service = JarvisAccessibilityService.instance ?: return false
+        service.openAppByPackage(meta.packageName)
+        return true
     }
     
     fun clearContext() {
         try {
             JarvisAccessibilityService.instance?.pressBack()
-            delay(300)
         } catch (e: Exception) { }
     }
     

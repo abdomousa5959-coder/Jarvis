@@ -210,7 +210,7 @@ class AppBuilderMode(private val context: Context) {
     }
     
     data class FileSpec(val path: String, val type: FileType)
-    enum class FileType { GRADLE, GRADLE_APP, MANIFEST, KOTLIN, XML, PROPERTIES, MARKDOWN }
+    enum class FileType { GRADLE, GRADLE_APP, MANIFEST, KOTLIN, XML, PROPERTIES, PROGUARD, MARKDOWN }
 }
 
 data class AppSpec(
@@ -222,7 +222,7 @@ data class AppSpec(
     val screens: List<ScreenSpec>,
     val entities: List<EntitySpec>,
     val permissions: List<String>,
-    val complexity: AppBuilderMode.Complexity
+    val complexity: Complexity
 )
 
 data class ScreenSpec(

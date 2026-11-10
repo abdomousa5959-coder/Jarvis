@@ -8,6 +8,10 @@ import com.openjarvis.agent.AgentState
 import com.openjarvis.graphify.GraphifyRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -213,18 +217,8 @@ class SocketServer(
         job.join()
     }
 
-    private fun parseRequest(line: String): Pair<String, String>? {
-        return try {
-            val json = org.json.JSONObject(line)
-            val cmd = json.optString("cmd", "")
-            val requestId = json.optString("requestId", "")
-            
-            if (cmd.isBlank()) null
-            else Pair(requestId, cmd)
-        } catch (e: Exception) {
-            null
-        }
-    }
+    private fun parseRequest(line: String): Pair<String, String>? =
+        SocketProtocol.parseRequest(line)
 
     internal fun createErrorResponse(requestId: String, error: String): String {
         return """{"requestId":"$requestId","status":"error","result":"$error"}"""
@@ -239,4 +233,16 @@ class SocketServer(
             .replace("\t", "\\t")
     }
 
+}
+
+/** Pure Kotlin JSON protocol parser, safe to exercise in local JVM unit tests. */
+internal object SocketProtocol {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun parseRequest(line: String): Pair<String, String>? = runCatching {
+        val request = json.parseToJsonElement(line).jsonObject
+        val command = request["cmd"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val requestId = request["requestId"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        if (command.isBlank()) null else requestId to command
+    }.getOrNull()
 }

@@ -1,15 +1,12 @@
 package com.openjarvis.agent
 
 import android.content.Context
-import com.openjarvis.graphify.GraphifyRepository
-import com.openjarvis.llm.LLMProvider
 import com.openjarvis.llm.UniversalAdapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.json.JSONException
 
 class ProviderFallbackChain(private val context: Context) {
     
-    private val graphifyRepo = GraphifyRepository(context)
     private val cooldownMap = mutableMapOf<String, Long>()
     private val _notification = MutableStateFlow<String?>(null)
     
@@ -20,46 +17,21 @@ class ProviderFallbackChain(private val context: Context) {
             ?.split(",") ?: emptyList()
     
     suspend fun completeWithFallback(system: String, user: String): Result<String> {
-        val providers = fallbackOrder.mapNotNull { name ->
-            try {
-                val adapter = UniversalAdapter(context)
-                val provider = getProvider(name, adapter)
-                provider to name
-            } catch (e: Exception) {
-                null
-            }
+        val provider = UniversalAdapter(context).getActiveProvider()
+        val providerName = provider.name
+        if (isInCooldown(providerName)) {
+            return Result.failure(Exception("$providerName is temporarily unavailable"))
         }
-        
-        for ((provider, name) in providers) {
-            if (isInCooldown(name)) continue
-            
-            val result = runCatching { provider.complete(system, user) }
-            
-            if (result.isSuccess) {
-                return result
-            }
-            
-            val errorMsg = result.exceptionOrNull()?.message ?: ""
-            
-            graphifyRepo.logProviderFailure(name, errorMsg)
-            
-            if (errorMsg.contains("429")) {
-                cooldownMap[name] = System.currentTimeMillis() + 60_000
-                _notification.value = "Rate limited by $name, trying next provider..."
-            }
-            
-            if (errorMsg.contains("401")) {
-                cooldownMap[name] = System.currentTimeMillis() + 3600_000
-            }
+        val result = provider.complete(system, user)
+        if (result.isFailure) {
+            val message = result.exceptionOrNull()?.message.orEmpty()
+            if (message.contains("429")) cooldownMap[providerName] = System.currentTimeMillis() + 60_000
+            if (message.contains("401")) cooldownMap[providerName] = System.currentTimeMillis() + 3_600_000
+            _notification.value = "Provider $providerName failed: $message"
         }
-        
-        return Result.failure(Exception("All providers failed or rate limited"))
+        return result
     }
-    
-    private fun getProvider(name: String, adapter: UniversalAdapter): LLMProvider {
-        return adapter.getActiveProvider()
-    }
-    
+
     private fun isInCooldown(name: String): Boolean {
         val cooldownUntil = cooldownMap[name] ?: return false
         return System.currentTimeMillis() < cooldownUntil

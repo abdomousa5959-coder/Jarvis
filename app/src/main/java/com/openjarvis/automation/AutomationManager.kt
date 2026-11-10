@@ -19,11 +19,11 @@ class AutomationManager(private val context: Context) {
     val automationsFlow: StateFlow<List<Automation>> = _automationsFlow
     
     suspend fun loadAutomations() {
-        _automationsFlow.value = dao.getAll()
+        _automationsFlow.value = dao.getAll().map { it.toAutomation() }
     }
     
     suspend fun createAutomation(automation: Automation): String = withContext(Dispatchers.IO) {
-        dao.insert(automation)
+        dao.insert(automation.toEntity())
         
         scheduleAutomation(automation)
         
@@ -32,7 +32,7 @@ class AutomationManager(private val context: Context) {
     }
     
     suspend fun updateAutomation(automation: Automation) = withContext(Dispatchers.IO) {
-        dao.update(automation)
+        dao.update(automation.toEntity())
         cancelAutomation(automation.id)
         
         if (automation.enabled) {
@@ -49,9 +49,9 @@ class AutomationManager(private val context: Context) {
     }
     
     suspend fun toggleAutomation(id: String, enabled: Boolean) = withContext(Dispatchers.IO) {
-        val automation = dao.getById(id) ?: return@withContext
+        val automation = dao.getById(id)?.toAutomation() ?: return@withContext
         val updated = automation.copy(enabled = enabled)
-        dao.update(updated)
+        dao.update(updated.toEntity())
         
         if (enabled) {
             scheduleAutomation(updated)
@@ -63,7 +63,7 @@ class AutomationManager(private val context: Context) {
     }
     
     suspend fun runNow(id: String) = withContext(Dispatchers.IO) {
-        val automation = dao.getById(id) ?: return@withContext
+        val automation = dao.getById(id)?.toAutomation() ?: return@withContext
         executeAutomation(automation)
     }
     
@@ -204,6 +204,31 @@ class AutomationManager(private val context: Context) {
         return null
     }
     
+    private fun AutomationEntity.toAutomation(): Automation {
+        val schedule = when (scheduleType) {
+            "WEEKLY" -> AutomationSchedule.Weekly(scheduleDayOfWeek, scheduleHour, scheduleMinute)
+            "INTERVAL" -> AutomationSchedule.Interval(scheduleIntervalMs.coerceAtLeast(15 * 60 * 1000L))
+            "ONCE" -> AutomationSchedule.Once(scheduleIntervalMs)
+            else -> AutomationSchedule.Daily(scheduleHour, scheduleMinute)
+        }
+        return Automation(id, name, command, schedule, enabled, lastRun, lastResult, runCount)
+    }
+
+    private fun Automation.toEntity(): AutomationEntity {
+        val type: String
+        var hour = 0
+        var minute = 0
+        var day = 0
+        var interval = 0L
+        when (val value = schedule) {
+            is AutomationSchedule.Daily -> { type = "DAILY"; hour = value.hour; minute = value.minute }
+            is AutomationSchedule.Weekly -> { type = "WEEKLY"; day = value.dayOfWeek; hour = value.hour; minute = value.minute }
+            is AutomationSchedule.Interval -> { type = "INTERVAL"; interval = value.intervalMs }
+            is AutomationSchedule.Once -> { type = "ONCE"; interval = value.atMs }
+        }
+        return AutomationEntity(id, name, command, type, hour, minute, day, interval, enabled, lastRun, lastResult, runCount)
+    }
+
     data class Automation(
         val id: String,
         val name: String,

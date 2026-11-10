@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.media.ImageReader
+import android.hardware.display.DisplayManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Handler
@@ -24,6 +25,9 @@ class ScreenshotCapture(private val context: Context) {
     private var handlerThread: HandlerThread? = null
     private var handler: Handler? = null
     private var isCapturing = false
+    private var displayWidth = 0
+    private var displayHeight = 0
+    private var displayDensity = 0
 
     fun startCapture(): Boolean {
         val projectionManager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -48,6 +52,9 @@ class ScreenshotCapture(private val context: Context) {
         val width = metrics.widthPixels
         val height = metrics.heightPixels
         val density = metrics.densityDpi
+        displayWidth = width
+        displayHeight = height
+        displayDensity = density
 
         handlerThread = HandlerThread("ScreenshotThread").apply { start() }
         handler = Handler(handlerThread!!.looper)
@@ -73,10 +80,10 @@ class ScreenshotCapture(private val context: Context) {
         try {
             mediaProjection?.createVirtualDisplay(
                 "Screenshot",
-                surface.width,
-                surface.height,
-                surface.allocation,
-                surface.allocation,
+                displayWidth,
+                displayHeight,
+                displayDensity,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 surface,
                 null,
                 handler

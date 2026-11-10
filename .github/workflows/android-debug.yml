@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: android-debug-${{ github.run_id }}
-  cancel-in-progress: false
+  group: android-debug-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

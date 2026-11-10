@@ -20,7 +20,6 @@ import com.openjarvis.agent.AgentState
 import com.openjarvis.bridge.SocketServer
 import com.openjarvis.graphify.GraphifyRepository
 import com.openjarvis.graphify.nodes.TaskNode
-import com.openjarvis.ui.overlay.FloatingOverlayWidget
 import com.openjarvis.voice.VoiceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +78,6 @@ class OverlayService : Service() {
         }
         
         try {
-            voiceManager.initialize()
         } catch (e: Exception) {
             // Voice initialization
         }

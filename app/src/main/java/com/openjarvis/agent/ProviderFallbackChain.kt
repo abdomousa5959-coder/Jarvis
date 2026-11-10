@@ -96,7 +96,7 @@ object JarvisErrorTranslator {
             error.message?.contains("NullPointerException") == true ->
                 "Screen changed unexpectedly. Trying to recover..."
             
-            else -> "Something went wrong: \${error.message?.take(100) ?: "Unknown error"}"
+            else -> "Something went wrong: " + (error.message?.take(100) ?: "Unknown error")
         }
     }
 }

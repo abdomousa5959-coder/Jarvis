@@ -17,7 +17,7 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
         <activity android:name=".ui.SettingsActivity" android:exported="false"
-            android:parentActivityName=".MainActivity" android:theme="@style/Theme.OpenJarvis" />
+            android:parentActivityName=".ui.MainActivity" android:theme="@style/Theme.OpenJarvis" />
         <service android:name=".accessibility.JarvisAccessibilityService" android:exported="false"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>

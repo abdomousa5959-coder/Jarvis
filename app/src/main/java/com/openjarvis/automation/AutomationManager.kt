@@ -124,7 +124,7 @@ class AutomationManager(private val context: Context) {
         }
         
         WorkManager.getInstance(context)
-            .enqueueUniqueWork(automation.id, ExistingWorkPolicy.REPLACE, request)
+            .enqueue(request)
     }
     
     private fun cancelAutomation(id: String) {
@@ -143,7 +143,7 @@ class AutomationManager(private val context: Context) {
             lastResult = result,
             runCount = automation.runCount + 1
         )
-        dao.update(updated)
+        dao.update(updated.toEntity())
     }
     
     private fun calculateDelay(targetHour: Int, targetMinute: Int): Long {
